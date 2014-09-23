@@ -1,0 +1,71 @@
+<html>
+<head>
+	<title>Typin' in Real Time</title>
+	<link rel="stylesheet" type="text/css" href="/stylesheets/style.css">
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+	<script type="text/javascript" src='/socket.io/socket.io.js'></script>
+	<link href='http://fonts.googleapis.com/css?family=Gloria+Hallelujah' rel='stylesheet' type='text/css'>
+	<script type="text/javascript">
+		$(document).ready(function(){
+			io = io.connect();
+
+			//ask for name when new user connects
+			var name = prompt("aaaarrrg, what's yer name???", "your name");
+			if (name != null) {
+    			document.getElementById("demo").innerHTML =
+    			"Hello " + name + "!, you are almost ready!";
+			}
+			
+			io.emit("thar_be_a_new_user",{name:name})
+
+			//make this box for the user signed on. This is their input field
+			$('#pirates').append("<div class='box'><h2>"+name+"</h2><textarea id='myText' placeholder='SCRAWL YOUR GIBBERISH, OR DIE!'></textarea></div>");
+
+			//now we begin the functional part of the app, aka the business:
+			io.on('current_list_o_pirates', function(data){
+				console.log(data);
+				for (var x in data){
+					$('#pirates').append("<div class='box'><h2>"+data[x].name+"</h2><p id='"+ x + "'>" +data[x].text+"</p></div>");
+				}
+			})
+
+			io.on('argh_new_pirate_aboard', function(data){
+				$('#pirates').append("<div class='box'><h2>"+data.name+"</h2><p id='"+ data.id+ "'></p></div>");
+			})
+
+			//we have to use .on here because the textarea is dynamically generated, IE no there on pageload
+			$('#pirates').on('keyup','#myText',function(){
+				io.emit("thar_be_scribblin", {scribbles: $(this).val()});
+			})
+
+			io.on("update_yer_scribbles",function(data){
+				$("#"+data.id).text(data.text);
+			})
+
+			io.on('someone_walked_the_plank', function(data){
+				$('#'+data.id).parent().fadeOut(2000, function(){
+					$('#'+data.id).parent().remove();
+				});
+			})
+		})
+	</script>
+
+</head>
+<body>
+	<h1>Argh, Typing in real time, MATEY!</h1>
+	<h3>This ain't your grandmother's internet, ya dirty landlubber!</h3>
+	<div id='demo'></div>
+	
+
+<!-- 	<div id='container'>
+		<h3>Broadcast a message to the rest of the chatters</h3>
+		<textarea id='message' cols='50' rows='15'></textarea>
+		<button id='enter'>Go ahead! Press to enter</button>
+	</div>
+
+	<div id='fromServer'></div> -->
+
+	<div id='pirates'></div>
+
+</body>
+</html>
